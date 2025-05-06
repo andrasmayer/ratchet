@@ -1,0 +1,21 @@
+.whisper{
+    position: relative; 
+    border:1px solid silver;
+    padding:5px;
+    border-radius:7px;
+    min-height:300px;
+}
+.whisper .whisper-message{
+    border-bottom:1px solid black;
+    white-space: pre-wrap;
+}
+
+.whisper .whisper-footer{
+    position:absolute;
+    bottom:0;
+}
+
+.whisper .whisper-response{
+    margin: 1rem;
+    min-width:90%;
+}

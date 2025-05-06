@@ -1,17 +1,23 @@
 <!DOCTYPE html>
 <html lang="hu">
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
     <meta charset="UTF-8">
     <title>WebSocket teszt</title>
+    <link rel="stylesheet" href="css/styles.css?v=1">
+
 </head>
 <body>
     <!--<textarea class="user" >user</textarea>-->
     <div class="loginBox">
+        <input class="userId" value="1">
         <input class="user" value="user">
         <button class="loginButton">LogIn</button>
     </div>
-    <textarea class="message" placeholder="Írj üzenetet..."></textarea>
+    <button class="logOut">LogOut</button>
     <div class="userList"></div>
+    <div class="messageCTN"></div>
 
     <script>
         const app_version = `?version=${new Date().getTime()}`

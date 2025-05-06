@@ -1,100 +1,100 @@
 const {login} = await import(`./Components/login/login.js${app_version}`)
-
-
+const { WhisperHandler, openWhisperWindow, reply} = await import(`./Components/Whisper/whisper.js${app_version}`)
 export class RatchetWebSocket {
     constructor(props){
-
-
-
-//proxy start
-
-
-    this.storage = new Proxy(localStorage, {
-        set: (target, key, value) => {
-            if(key == "ratchetUserToken" && value != ""){
-                this.conn.send(JSON.stringify({ type: "auth", user:this.getItem("ratchetUserToken")}))
-
+        this.userWindows = {}
+        this.props = props
+        this.storage = new Proxy(localStorage, {
+            set: (target, key, value) => {
+                target.setItem(key, value)
+                return true
+            },
+            get: (target, key) => {
+                return target.getItem(key)
+            },
+            deleteProperty: (target, key) => {
+                target.removeItem(key)
+                return true
             }
-            target.setItem(key, value);  // Az érték beállítása
-            return true;
-        },
-        get: (target, key) => {
-            return target.getItem(key);  // Az érték lekérése
-        },
-        deleteProperty: (target, key) => {
-            target.removeItem(key);  // Az érték eltávolítása
-            return true;
+        })
+
+        this.setItem = (key, value) =>{
+            this.storage[key] = value
         }
-    })
+        this.getItem = (key) =>{
+            return this.storage[key];
+        }
+        this.removeItem = (key) =>{
+            delete this.storage[key];
+        }
+       
+        this.ratchetUserToken =  this.getItem("ratchetUserToken")
+        if(this.ratchetUserToken != null){
+            this.ratchetUserToken = JSON.parse( this.getItem("ratchetUserToken") )
+            this.connect(this.ratchetUserToken)
+        }
+        else{  }
 
-    this.setItem = (key, value) =>{
-        this.storage[key] = value
     }
-
-    // Lekér egy értéket a localStorage-ból
-    this.getItem = (key) =>{
-        return this.storage[key];
-    }
-
-    // Eltávolít egy kulcs-érték párt a localStorage-ból
-    this.removeItem = (key) =>{
-        delete this.storage[key];
-    }
-
-        this.conn = new WebSocket(`ws://${props.ip}:${props.port}/${props.route}`)
+    connect(user){
+        this.connectionData = `?id=${user.userId}&userName=${user.userName}`
+        this.conn = new WebSocket(`ws://${this.props.ip}:${this.props.port}/${this.props.route}${this.connectionData}`)
 
         this.conn.onmessage = (e) =>{
-           
             const response = JSON.parse(e.data)
-            console.log( response)
-            if( response.type == "onlineUsers"){
-                this.onlineUsers(response.list)
-                
-            }
-            //getOnlineUsers()
-        }
 
-        this.conn.onopen = () => {
-            if(localStorage.getItem("ratchetUserToken")  != null){
-                console.log("relog")
-                this.conn.send(JSON.stringify({ type: "relog", user:localStorage.getItem("ratchetUserToken") }))
+            if( response.type == "user_list"){
+                this.onlineUsers(response.users)
+            }
+            if( response.type == "whisper"){
+                if(this.userWindows[response.from.userId] == null){
+                    openWhisperWindow(response,this,false)
+                    this.userWindows[response.from.userId] = true
+                }
+                else{
+                    reply(response,this)
+                }          
+
             }
             else{
-                console.log("Nem vagy belépve")
+               // console.log(response)
             }
-            //this.conn.send(JSON.stringify({ type: "relog", user:localStorage.getItem("ratchetUserToken") }))
-        };
+        
+        }
 
+        this.conn.onopen = () => {}
         this.conn.onerror = function (error) {
             console.error("WebSocket hiba:", error)
         }
-
-
     }
-
-
     onlineUsers(list){
+        const me = JSON.parse( this.getItem("ratchetUserToken") )
         const userList = document.querySelector(".userList")
         userList.innerHTML = ""
-        Object.keys(list).forEach(clientId=>{
-            userList.innerHTML += `<div clientId="${clientId}">${list[clientId]}</div>`
+        list.forEach(client=>{
+            if(client.id != me.userId){
+                userList.innerHTML += `<div class="clients" clientId="${client.id}">${client.userName}</div>`
+            }
         })
-        console.log(list)
-    }
+        const clients = document.querySelectorAll(".clients")
+        clients.forEach(itm=>{
+            itm.addEventListener("click",()=>{
+                this.currentTargetId = itm.getAttribute("clientId")
+                this.currentTargetName = itm.textContent
 
+                if(this.userWindows[this.currentTargetId] == null){
+                    this.userWindows[this.currentTargetId] = true
+                    const response = {from:{userId:this.currentTargetId, userName:this.currentTargetName }, to:{userId:me.userId, userName:me.userName}}
+                    openWhisperWindow(response,this)
+                    WhisperHandler(this)
+                }
+            })
+        })
+    }
     events(){
-        //this.setItem("ratchetUserToken","user123")
-        login({storage:this.storage, setItem:this.setItem})
-
-        
-
-
-
-
+        login({storage:this.storage, conn:this.conn, getItem:this.getItem, setItem:this.setItem, removeItem:this.removeItem, resource:this})
     }
-
 }
-
 
 const webSocketServer = new RatchetWebSocket({ip:"192.168.141.184", port:"8091", route:"chat"})
 webSocketServer.events()

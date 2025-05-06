@@ -1,7 +1,4 @@
 <?php
-session_start();
-$_SESSION["users"] = [];
-
 
 use Ratchet\MessageComponentInterface;
 use Ratchet\ConnectionInterface;
@@ -13,75 +10,108 @@ require __DIR__ . '/Ratchet/vendor/autoload.php';
 
 class MyChat implements MessageComponentInterface {
     protected $clients;
+    protected $users;
+
     public function __construct() {
         $this->clients = new \SplObjectStorage;
+        $this->users = [];
     }
+
     public function onOpen(ConnectionInterface $conn) {
-        $this->clientId = $conn->resourceId;        
         $this->clients->attach($conn);
-        //$conn->send(json_encode([$_SESSION["users"]]));
-        //var_dump($_SESSION);
 
+        if (isset($conn->httpRequest)) {
+            $queryString = $conn->httpRequest->getUri()->getQuery();
+            parse_str($queryString, $queryParams);
+
+            if (isset($queryParams['id']) && isset($queryParams['userName'])) {
+                $userId = $queryParams['id'];
+                $userName = $queryParams['userName'];
+
+                if (isset($this->users[$userId])) {
+                    $conn->send(json_encode([
+                        'type' => 'error',
+                        'message' => 'Ez az azonosító már foglalt.'
+                    ]));
+                    $conn->close();
+                    return;
+                }
+
+                // Tárolás
+                $this->users[$userId] = [
+                    'conn' => $conn,
+                    'userName' => $userName
+                ];
+                $conn->userId = $userId;
+
+                echo "Kapcsolódott: $userId ($userName)\n";
+                $this->broadcastUserList();
+
+            } else {
+                $conn->send(json_encode([
+                    'type' => 'error',
+                    'message' => 'Hiányzó id vagy userName.'
+                ]));
+                $conn->close();
+            }
+        }
     }
-    public function onMessage(ConnectionInterface $from, $msg) {
 
+    public function onMessage(ConnectionInterface $from, $msg) {
+        $message = json_decode($msg,true);
+        if($message["type"] == "whisper"){
+            echo "Privát üzenet " .$message["to"]["userName"] . " felhasználónak: " .$message["from"]["userName"] ." tól\n\n";
+
+            $this->users[$message["to"]["userId"]]['conn']->send(
+                json_encode([
+                    'type' => 'whisper',
+                    'from' => $message["from"],
+                    'message' => $message["message"],
+                    'to' => $message["to"]
+                ])
+            );
+
+        }
+        else if($message["type"] == "logOut"){
+            $from->close();
+        }
+        else{//Ha bármi más típus
+            foreach ($this->clients as $client) {
+                $client->send($msg);
+            }
+        }
+    }
+
+    public function onClose(ConnectionInterface $conn) {
+        $this->clients->detach($conn);
+        if (isset($conn->userId)) {
+            unset($this->users[$conn->userId]);
+            echo "Kilépett: userId = {$conn->userId}\n";
+            $this->broadcastUserList();
+        }
+    }
+
+    public function onError(ConnectionInterface $conn, \Exception $e) {
+        echo "Hiba: {$e->getMessage()}\n";
+        $conn->close();
+    }
+
+    protected function broadcastUserList() {
+        $userList = [];
+
+        foreach ($this->users as $userId => $userData) {
+            $userList[] = [
+                'id' => $userId,
+                'userName' => $userData['userName']
+            ];
+        }
 
         foreach ($this->clients as $client) {
-            $data = json_decode($msg, true);
-            if($data["type"] == "globalMessage"){
-
-                //$client->send( "$data[message] from $data[user] -> $this->clientId" );
-                $client->send( json_encode(["message"=>"Message from $data[from] -> $this->clientId"]) );
-
-            }
-            else if($data["type"] == "auth"){
-                if( in_array($data["user"], $_SESSION["users"]) ){
-                    echo "$data[user] felhasználónév foglalt\n";
-                }
-                else{
-
-                    
-
-                    //echo "$data[user] ($this->clientId) csatlakozott\n";
-                    $_SESSION["users"][$this->clientId ] = $data["user"];
-
-                    $client->send( json_encode(["type"=>"onlineUsers","list"=>$_SESSION["users"]]) );
-
-                }
-            }
-            else if($data["type"] == "relog"){
-                //echo "$data[user] ($this->clientId) újra csatlakozott\n";
-                $_SESSION["users"][$this->clientId ] = $data["user"];
-                $client->send( json_encode(["type"=>"onlineUsers","list"=>$_SESSION["users"]]) );
-
-
-            }
-
-            
-            else if($data["type"] == "getOnlineUsers"){
-                //print_r($_SESSION);
-                $client->send( json_encode(["type"=>"onlineUsers","list"=>$_SESSION["users"]]) );
-
-            }
-            
-            //echo $this->clientId . "\n";
-
-            var_dump($_SESSION);
-            
-            //$client->send($data["type"]);
-            //$client->send( $msg["message"] );
+            $client->send(json_encode([
+                'type' => 'user_list',
+                'users' => $userList
+            ]));
         }
-      //  var_dump($client);
-            
-    }
-    public function onClose(ConnectionInterface $conn) {
-        echo "$this->clientId kilépett\n\n\n\n\n\n";
-        unset($_SESSION["users"][$this->clientId ]);
-        var_dump($_SESSION);
-        $this->clients->detach($conn);
-    }
-    public function onError(ConnectionInterface $conn, \Exception $e) {
-        $conn->close();
     }
 }
 
@@ -92,7 +122,7 @@ $server = IoServer::factory(
         )
     ),
     8091,
-    '0.0.0.0'  // EZ FONTOS!
+    '0.0.0.0'
 );
 
 $server->run();
