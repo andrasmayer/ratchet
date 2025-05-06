@@ -1,7 +1,16 @@
+const {Ajax} = await import(`./Hooks/Ajax/Ajax.js${app_version}`)
 const {login} = await import(`./Components/login/login.js${app_version}`)
 const { WhisperHandler, openWhisperWindow, reply} = await import(`./Components/Whisper/whisper.js${app_version}`)
 export class RatchetWebSocket {
     constructor(props){
+
+    
+        this.ipv4= Ajax({
+            url:"./ipAddress.php",
+            method:"post",
+        })
+
+
         this.userWindows = {}
         this.props = props
         this.storage = new Proxy(localStorage, {
@@ -38,7 +47,8 @@ export class RatchetWebSocket {
     }
     connect(user){
         this.connectionData = `?id=${user.userId}&userName=${user.userName}`
-        this.conn = new WebSocket(`ws://${this.props.ip}:${this.props.port}/${this.props.route}${this.connectionData}`)
+        //this.conn = new WebSocket(`ws://${this.props.ip}:${this.props.port}/${this.props.route}${this.connectionData}`)
+        this.conn = new WebSocket(`ws://${this.ipv4}:${this.props.port}/${this.props.route}${this.connectionData}`)
 
         this.conn.onmessage = (e) =>{
             const response = JSON.parse(e.data)
