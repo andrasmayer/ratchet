@@ -1,42 +1,37 @@
 const {Ajax} = await import(`./Hooks/Ajax/Ajax.js${app_version}`)
-const {login} = await import(`./Components/login/login.js${app_version}`)
+const {loginCheck} = await import(`./Components/login/login.js${app_version}`)
+const {GUI} = await import(`./Components/GUI/GUI.js${app_version}`)
 const { openWhisperWindow, reply} = await import(`./Components/Whisper/whisper.js${app_version}`)
+const { localStorageHandler} = await import(`./Components/localStorageHandler/localStorageHandler.js${app_version}`)
+
+
+
+
+
 export class RatchetWebSocket {
     constructor(props){
+        //localStorage.removeItem("ratchetUserToken")
+        //Grafikus elemek betöltése
+        const root = document.querySelector("#root")
+        root.innerHTML = GUI
 
-    
+        this.activeUsers = []
+        this.userWindows = {}
+        this.tmp_storage  = new localStorageHandler()
+        Object.keys(this.tmp_storage).forEach(procedure=>{
+            this[procedure] = this.tmp_storage[procedure]
+        })
+
         this.ipv4= Ajax({
             url:"./ipAddress.php",
             method:"post",
         })
 
 
-        this.userWindows = {}
+        
         this.props = props
-        this.storage = new Proxy(localStorage, {
-            set: (target, key, value) => {
-                target.setItem(key, value)
-                return true
-            },
-            get: (target, key) => {
-                return target.getItem(key)
-            },
-            deleteProperty: (target, key) => {
-                target.removeItem(key)
-                return true
-            }
-        })
 
-        this.setItem = (key, value) =>{
-            this.storage[key] = value
-        }
-        this.getItem = (key) =>{
-            return this.storage[key];
-        }
-        this.removeItem = (key) =>{
-            delete this.storage[key];
-        }
-       
+
         this.ratchetUserToken =  this.getItem("ratchetUserToken")
         if(this.ratchetUserToken != null){
             this.ratchetUserToken = JSON.parse( this.getItem("ratchetUserToken") )
@@ -47,9 +42,8 @@ export class RatchetWebSocket {
     }
     connect(user){
         this.connectionData = `?id=${user.userId}&userName=${user.userName}`
-        //this.conn = new WebSocket(`ws://${this.props.ip}:${this.props.port}/${this.props.route}${this.connectionData}`)
         this.conn = new WebSocket(`ws://${this.ipv4}:${this.props.port}/${this.props.route}${this.connectionData}`)
-
+        this.tmp_storage.conn = this.conn
         this.conn.onmessage = (e) =>{
             const response = JSON.parse(e.data)
 
@@ -64,15 +58,9 @@ export class RatchetWebSocket {
                 else{
                     reply(response,this)
                 }          
-
             }
-            else{
-               // console.log(response)
-               //console.log("reply")
-            }
-        
+            else{}
         }
-
         this.conn.onopen = () => {}
         this.conn.onerror = function (error) {
             console.error("WebSocket hiba:", error)
@@ -82,12 +70,15 @@ export class RatchetWebSocket {
         const me = JSON.parse( this.getItem("ratchetUserToken") )
         const userList = document.querySelector(".userList")
         userList.innerHTML = ""
+        this.activeUsers = []
         list.forEach(client=>{
+            this.activeUsers.push(client.id.toString())
             if(client.id != me.userId){
-                userList.innerHTML += `<div class="clients" clientId="${client.id}">${client.userName}</div>`
+                userList.innerHTML += `<button class="clients" clientId="${client.id}">${client.userName}</button>`
             }
         })
         const clients = document.querySelectorAll(".clients")
+        
         clients.forEach(itm=>{
             itm.addEventListener("click",()=>{
                 this.currentTargetId = itm.getAttribute("clientId")
@@ -100,9 +91,41 @@ export class RatchetWebSocket {
                 }
             })
         })
+
+        //Ha nincs nyitott ablak frissítésnél, üríti a hozzá tartozó objektumot
+        const whisper = document.querySelectorAll(".whisper")
+        if(whisper.length == 0){
+            this.userWindows = {}
+        }
+               
+        whisper.forEach(itm=>{
+            const targetid =  itm.getAttribute("targetid")
+            if( this.activeUsers.includes(targetid) === false){
+                const userLeft = itm.querySelector(".userLeft")
+                if(userLeft == null){
+                    itm.querySelector(".whisper-body").innerHTML += `<i style="color:#ccc" class="userLeft">Felhasználó kilépett</i>`
+                    itm.querySelector(".whisper-response").disabled = true
+                }
+            }
+            else{
+                const userLeft = itm.querySelector(".userLeft")
+                if(userLeft != null){
+                    userLeft.remove()
+                    itm.querySelector(".whisper-response").disabled = false  
+                }
+            }
+        })
     }
     events(){
-        login({storage:this.storage, conn:this.conn, getItem:this.getItem, setItem:this.setItem, removeItem:this.removeItem, resource:this})
+
+        loginCheck({
+            storage:this.storage,
+            conn:this.conn,
+            getItem:this.getItem, 
+            setItem:this.setItem, 
+            removeItem:this.removeItem, 
+            resource:this        
+        })
     }
 }
 
