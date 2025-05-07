@@ -1,6 +1,6 @@
 const {Ajax} = await import(`./Hooks/Ajax/Ajax.js${app_version}`)
 const {login} = await import(`./Components/login/login.js${app_version}`)
-const { WhisperHandler, openWhisperWindow, reply} = await import(`./Components/Whisper/whisper.js${app_version}`)
+const { openWhisperWindow, reply} = await import(`./Components/Whisper/whisper.js${app_version}`)
 export class RatchetWebSocket {
     constructor(props){
 
@@ -68,6 +68,7 @@ export class RatchetWebSocket {
             }
             else{
                // console.log(response)
+               //console.log("reply")
             }
         
         }
@@ -96,7 +97,6 @@ export class RatchetWebSocket {
                     this.userWindows[this.currentTargetId] = true
                     const response = {from:{userId:this.currentTargetId, userName:this.currentTargetName }, to:{userId:me.userId, userName:me.userName}}
                     openWhisperWindow(response,this)
-                    WhisperHandler(this)
                 }
             })
         })
