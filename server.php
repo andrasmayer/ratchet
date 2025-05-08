@@ -6,7 +6,7 @@ use Ratchet\Server\IoServer;
 use Ratchet\Http\HttpServer;
 use Ratchet\WebSocket\WsServer;
 
-require __DIR__ . '/Ratchet/vendor/autoload.php';
+require __DIR__ . '/vendor/Ratchet/vendor/autoload.php';
 
 class MyChat implements MessageComponentInterface {
     protected $clients;
