@@ -14,6 +14,11 @@ export const WhisperHandler = (resource) =>{
                         message: itm.value == "" ? "" : itm.value 
                     })
                     itm.value = ""
+/*
+                    console.log("reply")
+                    console.log(from)
+                    console.log(to)
+                    */
                 }
             }
         })
@@ -23,7 +28,7 @@ export const WhisperHandler = (resource) =>{
     whisper.forEach(itm=>{
         itm.addEventListener("click",()=>{
             resource.currentTargetId = itm.parentNode.parentNode.getAttribute("targetId")
-            resource.currentTargetName = itm.parentNode.parentNode.querySelector(".whisper-userName").textContent
+            //resource.currentTargetName = itm.parentNode.parentNode.querySelector(".whisper-userName").textContent
         })
     })
 }
@@ -49,13 +54,27 @@ export const openWhisperWindow = (response,resource) =>{
     </div>
     `
 
+/*
+    if(response.to != null){
+
+        const targetUserTab = document.querySelector(`#userTab_${response.from.userId}`)
+        console.log(targetUserTab)
+        //const newMessages = targetUserTab.querySelector(".newMessages")
+       // newMessages.textContent = 1
+
+    }
+*/
 
     const chatTabs = document.querySelector("#chatTabs")
     const openTabs = chatTabs.querySelectorAll(".nav-link").length
 
     chatTabs.innerHTML +=   `<li class="nav-item" role="presentation">
-                                <button class="nav-link ${openTabs == 0 ? "active" : "" }" id="home-tab" data-bs-toggle="tab" data-bs-target="#user_${response.from.userId}"
-                                    type="button" role="tab" aria-controls="user_${response.from.userId}" aria-selected="true">${response.from.userName}</button>
+                                <button class="nav-link text-dark ${openTabs == 0 ? "active" : "" }" id="userTab_${response.from.userId}" data-bs-toggle="tab" data-bs-target="#user_${response.from.userId}"
+                                    type="button" role="tab" aria-controls="user_${response.from.userId}" aria-selected="true">
+                                    ${response.from.userName}
+                                        <span class="newMessages">${response.to != null && openTabs != 0 ? `<i class="fa fa-comment newMessagesBuble"></i> 1` : ""}</span>
+                                    </button>
+                                    
                             </li>`
 
 
@@ -63,23 +82,36 @@ export const openWhisperWindow = (response,resource) =>{
 
     const chatTabsContent = chatTabs.parentNode.querySelector("#chatTabsContent")
 
-//fade show ${openTabs == 0 ? "active" : "" }
     chatTabsContent.innerHTML +=    `<div class="tab-pane fade show ${openTabs == 0 ? "active" : "" }" id="user_${response.from.userId}" role="tabpanel">
                                         ${Window}
                                     </div>`
-    //console.log()
 
-    //const messageCTN = document.querySelector(".messageCTN")
-    //messageCTN.innerHTML += Window
     WhisperHandler(resource)
 }
 
 
 export const reply = (response) => {
+
+    
+   
     const whisper = document.querySelectorAll(".whisper");
     whisper.forEach(itm => {
       if (itm.getAttribute("targetId") == response.from.userId) {
-
+        if( response.to != null){
+            const targetUserTab = document.querySelector(`#userTab_${response.from.userId}`)
+            const newMessages = targetUserTab.querySelector(".newMessages")
+            //newMessages.textContent = 1
+            if( targetUserTab.classList.contains("active") === false){
+                if(newMessages.textContent == "" ){
+                    newMessages.innerHTML = '<i class="fa fa-comment newMessagesBuble"></i> 1'
+                }
+                else{
+                    const tmpContent = parseInt(newMessages.textContent.split(`<i class="fa fa-comment newMessagesBuble"></i>`).join(""))
+                    //newMessages.textContent++
+                    newMessages.innerHTML = `<i class="fa fa-comment newMessagesBuble"></i> ${tmpContent+1}`
+                }
+            }
+        }
 
         
         const from = JSON.parse(localStorage.getItem("ratchetUserToken") ) 
@@ -98,5 +130,4 @@ export const reply = (response) => {
       }
     })
 }
-  
 

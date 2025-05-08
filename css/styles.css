@@ -33,5 +33,8 @@
 }
 .whisper .bg-me{
     background-color:#d9cba3;
-    //color:white;
+}
+.newMessagesBuble{
+    color:red;
+    font-weight:bold;
 }

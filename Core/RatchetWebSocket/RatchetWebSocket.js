@@ -1,6 +1,6 @@
 const {Ajax} = await import(`../../Hooks/Ajax/Ajax.js${app_version}`)
 const {loginCheck} = await import(`../../Components/login/login.js${app_version}`)
-const {GUI} = await import(`../../Components/GUI/GUI.js${app_version}`)
+const {GUI, userTabsEvents} = await import(`../../Components/GUI/GUI.js${app_version}`)
 const { openWhisperWindow, reply} = await import(`../../Components/Whisper/whisper.js${app_version}`)
 const { localStorageHandler} = await import(`../../Components/localStorageHandler/localStorageHandler.js${app_version}`)
 
@@ -14,6 +14,9 @@ export class RatchetWebSocket {
         //Grafikus elemek betöltése
         const root = document.querySelector("#root")
         root.innerHTML = GUI
+        //console.log( root.innerHTML)
+  
+
 
         this.activeUsers = []
         this.userWindows = {}
@@ -94,6 +97,22 @@ export class RatchetWebSocket {
             isConnected.forEach(itm=>{
                 itm.classList.remove("d-none")
             })
+
+            
+
+
+
+            userTabsEvents()
+              
+
+          
+
+
+
+
+
+
+
         }
         this.conn.onerror = function () {}
     }
@@ -158,8 +177,12 @@ export class RatchetWebSocket {
             removeItem:this.removeItem, 
             resource:this        
         })
+
+
+
     }
 }
 
 const webSocketServer = new RatchetWebSocket({ip:"192.168.141.184", port:"8091", route:"chat"})
 webSocketServer.events()
+

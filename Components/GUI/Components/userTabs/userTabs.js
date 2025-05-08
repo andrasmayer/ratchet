@@ -8,6 +8,23 @@ export class userTabs {
         </div>
         `
     }
+    events(){ 
+             
+        const tabContainer = document.querySelector('#chatTabs');
+        if (!tabContainer) {
+          console.warn('.chatTabs elem nem található');
+          return
+        }
+    
+        tabContainer.addEventListener('shown.bs.tab', function (event) {
+            const aktivTabID = event.target.getAttribute('data-bs-target')
+          //const targetTab = document.querySelector(aktivTabID)
+            const targetTab = event.target.querySelector(".newMessages")
+            targetTab.innerHTML = ""
+          //console.log(targetTab)
+        });
+      
+    }
     tmp(){
 
 

@@ -42,8 +42,9 @@ export const GUI = `
         </div>
 
 
-
     </div>
 
     <link rel="stylesheet" href="css/styles.css${app_version}">
     `
+
+export const userTabsEvents = tabs.events
