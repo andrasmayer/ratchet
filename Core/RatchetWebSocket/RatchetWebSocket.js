@@ -25,12 +25,15 @@ export class RatchetWebSocket {
             this[procedure] = this.tmp_storage[procedure]
         })
 
-        this.ipv4= Ajax({
-            url:"./ipAddress.php",
+        this.system = Ajax({
+            url:"./getOS.php",
             method:"post",
+            response:"json"
         })
-
-
+        this.ipv4 = this.system.ipv4
+        this.OS   = this.system.OS
+        
+        console.log(this.system)
         
         this.props = props
 
@@ -98,20 +101,7 @@ export class RatchetWebSocket {
                 itm.classList.remove("d-none")
             })
 
-            
-
-
-
             userTabsEvents()
-              
-
-          
-
-
-
-
-
-
 
         }
         this.conn.onerror = function () {}
