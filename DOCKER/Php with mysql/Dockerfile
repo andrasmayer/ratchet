@@ -1,0 +1,55 @@
+version: '3.7'
+
+services:
+  # Apache + PHP 8.2
+  web:
+    image: php:8.2-apache
+    container_name: apache_php
+    volumes:
+      - ./html:/var/www/html
+    ports:
+      - "8080:80"
+    environment:
+      - MYSQL_ROOT_PASSWORD=root_password
+    networks:
+      - mynetwork
+    command: >
+      bash -c "apt-get update && apt-get install -y iproute2 cron nano && \
+      pecl install ratchet && docker-php-ext-enable ratchet && \
+      curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && \
+      composer require cboden/ratchet && \
+      cron && apache2-foreground"
+  
+  # MySQL
+  db:
+    image: mysql:5.7
+    container_name: mysql_db
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: my_database
+      MYSQL_USER: user
+      MYSQL_PASSWORD: user_password
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+  # phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_PORT: 3306
+    networks:
+      - mynetwork
+
+volumes:
+  db_data:
+    driver: local
+
+networks:
+  mynetwork:
+    driver: bridge

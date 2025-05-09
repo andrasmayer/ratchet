@@ -1,0 +1,14 @@
+# PHP alapú kép + Apache
+FROM php:8.2-apache
+
+# Ratchet telepítése
+RUN apt-get update && apt-get install -y \
+    libssl-dev \
+    && pecl install ratchet \
+    && docker-php-ext-enable ratchet
+
+# Telepítjük a Composer-t
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+# WebSocket és más szükséges PHP csomagok telepítése
+RUN composer require cboden/ratchet
