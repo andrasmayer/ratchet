@@ -1,9 +1,8 @@
 const {Ajax} = await import(`../../Hooks/Ajax/Ajax.js${app_version}`)
 const {loginCheck} = await import(`../../Components/login/login.js${app_version}`)
-const {GUI, userTabsEvents} = await import(`../../Components/GUI/GUI.js${app_version}`)
+const {GUI, userTabsEvents, Rooms} = await import(`../../Components/GUI/GUI.js${app_version}`)
 const { openWhisperWindow, reply} = await import(`../../Components/Whisper/whisper.js${app_version}`)
 const { localStorageHandler} = await import(`../../Components/localStorageHandler/localStorageHandler.js${app_version}`)
-
 
 
 
@@ -33,7 +32,7 @@ export class RatchetWebSocket {
         this.ipv4 = this.system.ipv4
         this.OS   = this.system.OS
         
-        console.log(this.system)
+
         
         this.props = props
 
@@ -58,6 +57,9 @@ export class RatchetWebSocket {
             if( response.type == "user_list"){
                 this.onlineUsers(response.users)
             }
+            if( response.type == "roomList"){
+                this.openRooms(response.rooms)
+            }
             if( response.type == "whisper"){
                 if(this.userWindows[response.from.userId] == null){
                     openWhisperWindow(response,this,false)
@@ -67,7 +69,9 @@ export class RatchetWebSocket {
                     reply(response,this)
                 }          
             }
-            else{}
+            else{
+                console.log(          response)
+            }
         }
        
 
@@ -77,7 +81,6 @@ export class RatchetWebSocket {
             timeCounter++
             const errorCTN = document.querySelector(".errorCTN")
             errorCTN.innerHTML = `Csatlakozási kísérlet: ${5-timeCounter}`
-            console.log(timeCounter)
         },1000)
 
         
@@ -103,6 +106,11 @@ export class RatchetWebSocket {
 
             userTabsEvents()
 
+            Rooms(this)
+            
+            
+            //roomList
+            this.conn.send(JSON.stringify({type:"roomList"}) )
         }
         this.conn.onerror = function () {}
     }
@@ -157,6 +165,35 @@ export class RatchetWebSocket {
             }
         })
     }
+
+
+
+    openRooms(list){
+        const roomList = document.querySelector(".roomList")
+        roomList.innerHTML = ""
+        this.activeUsers = []
+        list.forEach(room=>{
+            roomList.innerHTML += 
+            `<div role="button" data-bs-dismiss="offcanvas" aria-label="Close" class="room list-group-item" roomName="${room.roomName}">
+                <label>${room.roomName}</label>
+                <label class="text-primary">(${room.userCount})</label>
+
+            </div>`
+            
+        })
+       
+        const rooms = document.querySelectorAll(".room")
+        rooms.forEach(itm=>{
+            console.log(itm)
+            itm.addEventListener("click",()=>{
+                this.conn.send(JSON.stringify({type:"enterRoom", roomName:itm.getAttribute("roomName")}) )
+            })
+        })
+
+
+
+    }
+
     events(){
 
         loginCheck({

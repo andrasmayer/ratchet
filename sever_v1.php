@@ -79,13 +79,6 @@ class MyChat implements MessageComponentInterface {
         else if($message["type"] == "createRoom"){
             $this->createRoom($message["roomName"], $from);
         }
-        else if($message["type"] == "roomList"){
-            $this->getRoomList( $from);
-        }
-        else if($message["type"] == "enterRoom"){
-            $this->enterRoom($message["roomName"],$from);
-            //$this->getRoomList( $from);
-        }
         else{//Ha bármi más típus
             foreach ($this->clients as $client) {
                 $client->send($msg);
@@ -101,11 +94,6 @@ class MyChat implements MessageComponentInterface {
             $this->broadcastUserList();
         }
     }
-
-
-
-
-
 
     public function onError(ConnectionInterface $conn, \Exception $e) {
         echo "Hiba: {$e->getMessage()}\n";
@@ -134,16 +122,10 @@ class MyChat implements MessageComponentInterface {
 
 
 
-
-
-
-//Szoba funkciók
     public function createRoom($roomName,$from) {
         if (!isset($this->rooms[$roomName])) {
             $this->rooms[$roomName] = [];
             $message = "$roomName létrehozva";
-
-            $this->enterRoom($roomName,$from);
         }
         else{
             $message =  "$roomName már létezik";
@@ -158,72 +140,6 @@ class MyChat implements MessageComponentInterface {
         );
 
     }
-
-
-
-
-
-
-
-    public function enterRoom($roomName, ConnectionInterface $conn) {
-        if (!isset($this->rooms[$roomName])) {
-            $conn->send(json_encode([
-                'type' => 'error',
-                'message' => "A(z) \"$roomName\" szoba nem létezik."
-            ]));
-            return;
-        }
-
-        if (isset($conn->roomName)) {
-            $prevRoom = $conn->roomName;
-            unset($this->rooms[$prevRoom][$conn->resourceId]);
-        }
-
-        $conn->roomName = $roomName;
-        $this->rooms[$roomName][$conn->resourceId] = $conn;
-/*
-        $conn->send(json_encode([
-            'type' => 'enterRoom',
-            'message' => "Beléptél a(z) \"$roomName\" szobába."
-        ]));
-        echo "Felhasználó {$conn->userId} belépett a(z) \"$roomName\" szobába.\n";
-
-*/
-        foreach ($this->clients as $client) {
-
-            $this->getRoomList($client);
-        }
-
-
-
-    }
-
-
-
-    public function getRoomList(ConnectionInterface $conn) {
-        $roomList = [];
-    
-        foreach ($this->rooms as $roomName => $members) {
-            $roomList[] = [
-                'roomName' => $roomName,
-                'userCount' => count($members)
-            ];
-        }
-        foreach ($this->clients as $client) {
-            $client->send(json_encode([
-                'type' => 'roomList',
-                'rooms' => $roomList
-            ]));
-        }
-        /*
-        $conn->send(json_encode([
-            'type' => 'roomList',
-            'rooms' => $roomList
-        ]));
-        */
-    }
-    
-
 
 
 
