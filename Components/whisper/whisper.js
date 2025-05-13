@@ -14,11 +14,7 @@ export const WhisperHandler = (resource) =>{
                         message: itm.value == "" ? "" : itm.value 
                     })
                     itm.value = ""
-/*
-                    console.log("reply")
-                    console.log(from)
-                    console.log(to)
-                    */
+
                 }
             }
         })
@@ -26,9 +22,35 @@ export const WhisperHandler = (resource) =>{
 
     const whisper = document.querySelectorAll(".whisper-response")
     whisper.forEach(itm=>{
+        console.log('hali')
         itm.addEventListener("click",()=>{
             resource.currentTargetId = itm.parentNode.parentNode.getAttribute("targetId")
+
+            /*
+            closeWindow.addEventListener("click",()=>{
+                console.log(123)
+            })
+                */
             //resource.currentTargetName = itm.parentNode.parentNode.querySelector(".whisper-userName").textContent
+        })
+
+        const whisperWindow = document.querySelectorAll(".whisper")
+        whisperWindow.forEach(itm=>{
+            const closeWindow = itm.querySelector(".closeWindow")
+            closeWindow.addEventListener("click",()=>{
+                const userId = itm.parentNode.parentNode.getAttribute("id").split("user_").join("")
+                const core = itm.parentNode.parentNode.parentNode.parentNode
+                const tabs = core.querySelector("#chatTabs").querySelectorAll("li")
+                tabs.forEach(tab=>{
+                    const tabId = tab.querySelector(".nav-link").getAttribute("id").split("userTab_").join("")
+                    if(tabId == userId){
+                        tab.remove()
+                    }
+                })
+
+                itm.parentNode.parentNode.remove() //chat tároló törlése
+                delete resource.userWindows[userId]
+            })
         })
     })
 }
@@ -39,8 +61,9 @@ export const openWhisperWindow = (response,resource) =>{
     const Window = `
     <div class="">
         <div class="whisper card border-0" targetId="${response.from.userId}">
+        
             <div class="whisper-header p-3 pb-0">
-                <!--<label class="whisper-userName">${response.from.userName}</label>-->
+                <button class="float-end btn-close closeWindow"></button>
             </div>
             <div class="whisper-body p-3">
             ${
@@ -54,16 +77,7 @@ export const openWhisperWindow = (response,resource) =>{
     </div>
     `
 
-/*
-    if(response.to != null){
 
-        const targetUserTab = document.querySelector(`#userTab_${response.from.userId}`)
-        console.log(targetUserTab)
-        //const newMessages = targetUserTab.querySelector(".newMessages")
-       // newMessages.textContent = 1
-
-    }
-*/
 
     const chatTabs = document.querySelector("#chatTabs")
     const openTabs = chatTabs.querySelectorAll(".nav-link").length
