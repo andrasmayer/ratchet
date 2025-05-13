@@ -1,22 +1,18 @@
-#version: '3.7'
-
 services:
   web:
-    image: php:8.2-apache
+    build: .  # Saját Dockerfile alapján épül
     container_name: apache_php
     volumes:
       - ./html:/var/www/html
     ports:
-      - "8080:80"  # Apache port
-      - "8091:8091"  # Ratchet port
+      - "8080:80"   # Apache port
+      - "8091:8091" # Ratchet port
     environment:
       - MYSQL_ROOT_PASSWORD=root_password
     networks:
       - mynetwork
-    command: >
-      bash -c "apt-get update && apt-get install -y iproute2 cron nano && \
-      apache2-foreground"
-  
+
+
   db:
     image: mysql:5.7
     container_name: mysql_db
@@ -40,7 +36,6 @@ services:
       PMA_PORT: 3306
     networks:
       - mynetwork
-
 
 volumes:
   db_data:

@@ -61,15 +61,18 @@ export class RatchetWebSocket {
  //this.conn = new WebSocket(`ws://host.docker.internal:8091/${this.props.route}${this.connectionData}`)  //Működik, ha a host futtatja a websocketet    
 //this.conn = new WebSocket("ws://localhost:8091/chat?id=100&userName=PC");
 
-this.conn = new WebSocket(`ws://localhost:8091/chat${this.connectionData}`);
+//this.conn = new WebSocket(`ws://localhost:8091/chat${this.connectionData}`);      //Működik a hoston
+this.conn = new WebSocket(`ws://192.168.0.209:8091/chat${this.connectionData}`);    //Működik mindenhol, de 254 a konténer ip-je
+//this.conn = new WebSocket(`ws://172.18.0.3:8091/chat${this.connectionData}`);
+//this.conn = new WebSocket(`ws://host.docker.internal:8091/chat${this.connectionData}`);
+
+//$ winpty docker exec -it apache_php bash
+
+console.log(resource)
+//this.conn = new WebSocket(resource);
 console.log(this.connectionData)
 
 
- //this.conn = new WebSocket(`ws://host.docker.internal:8091//chat?id=100&userName=PC`)    
- //this.conn = new WebSocket('ws://192.168.141.184:8091/chat?id=100&userName=PC');    
- //this.conn = new WebSocket('ws://localhost:8091/chat?id=100&userName=PC');    
- //this.conn = new WebSocket('ws://127.0.0.1:8091/chat?id=100&userName=PC');    
- 
  
  /*
         //this.conn = new WebSocket(resource)
